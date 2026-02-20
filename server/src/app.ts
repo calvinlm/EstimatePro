@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { v4 as uuidv4 } from "uuid";
 import type { Application, NextFunction, Request, Response } from "express";
 import { authRouter } from "./routes/auth.routes";
+import { estimatesRouter } from "./routes/estimates.routes";
+import { projectsRouter } from "./routes/projects.routes";
 import { setupRouter } from "./routes/setup.routes";
 
 type RequestWithId = Request & { requestId?: string };
@@ -58,6 +60,8 @@ export function createApp(): Application {
   });
 
   app.use("/auth", authRouter);
+  app.use("/estimates", estimatesRouter);
+  app.use("/projects", projectsRouter);
   app.use("/setup", setupRouter);
 
   app.use((req: RequestWithId, res: Response) => {
