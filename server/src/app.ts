@@ -3,12 +3,14 @@ import express from "express";
 import helmet from "helmet";
 import { v4 as uuidv4 } from "uuid";
 import type { Application, NextFunction, Request, Response } from "express";
+import { auditRouter } from "./routes/audit.routes";
 import { authRouter } from "./routes/auth.routes";
 import { estimatesRouter } from "./routes/estimates.routes";
 import { formulasRouter } from "./routes/formulas.routes";
 import { lineItemsRouter } from "./routes/line-items.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { setupRouter } from "./routes/setup.routes";
+import { usersRouter } from "./routes/users.routes";
 
 type RequestWithId = Request & { requestId?: string };
 
@@ -62,11 +64,13 @@ export function createApp(): Application {
   });
 
   app.use("/auth", authRouter);
+  app.use("/audit", auditRouter);
   app.use("/estimates", estimatesRouter);
   app.use("/formulas", formulasRouter);
   app.use("/line-items", lineItemsRouter);
   app.use("/projects", projectsRouter);
   app.use("/setup", setupRouter);
+  app.use("/users", usersRouter);
 
   app.use((req: RequestWithId, res: Response) => {
     res.status(404).json({

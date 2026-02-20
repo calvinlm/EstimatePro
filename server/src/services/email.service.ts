@@ -13,6 +13,12 @@ type SendPasswordResetEmailInput = {
   resetLink: string;
 };
 
+type SendUserInviteEmailInput = {
+  to: string;
+  setupLink: string;
+  role: string;
+};
+
 function getEmailConfig(): { apiKey: string; from: string } {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -70,6 +76,33 @@ export async function sendPasswordResetEmail(input: SendPasswordResetEmailInput)
   await sendEmail({
     to: input.to,
     subject: "Reset your EstimatePro PH password",
+    text,
+    html,
+  });
+}
+
+export async function sendUserInviteEmail(input: SendUserInviteEmailInput): Promise<void> {
+  const html = [
+    "<p>Hello,</p>",
+    "<p>You have been invited to EstimatePro PH.</p>",
+    `<p>Assigned role: <strong>${input.role}</strong></p>`,
+    `<p><a href="${input.setupLink}">Set up your account</a></p>`,
+    "<p>This is a one-time setup link.</p>",
+  ].join("");
+
+  const text = [
+    "Hello,",
+    "",
+    "You have been invited to EstimatePro PH.",
+    `Assigned role: ${input.role}`,
+    `Set up your account: ${input.setupLink}`,
+    "",
+    "This is a one-time setup link.",
+  ].join("\n");
+
+  await sendEmail({
+    to: input.to,
+    subject: "You are invited to EstimatePro PH",
     text,
     html,
   });
