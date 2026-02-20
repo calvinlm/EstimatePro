@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth.routes";
 import { estimatesRouter } from "./routes/estimates.routes";
 import { formulasRouter } from "./routes/formulas.routes";
 import { lineItemsRouter } from "./routes/line-items.routes";
+import { pdfJobsRouter } from "./routes/pdf-jobs.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { setupRouter } from "./routes/setup.routes";
 import { usersRouter } from "./routes/users.routes";
@@ -68,6 +69,7 @@ export function createApp(): Application {
   app.use("/estimates", estimatesRouter);
   app.use("/formulas", formulasRouter);
   app.use("/line-items", lineItemsRouter);
+  app.use("/pdf-jobs", pdfJobsRouter);
   app.use("/projects", projectsRouter);
   app.use("/setup", setupRouter);
   app.use("/users", usersRouter);

@@ -9,6 +9,7 @@ import {
   softDeleteEstimateController,
   updateEstimateController,
 } from "../controllers/estimate.controller";
+import { requestEstimatePdfController } from "../controllers/pdf.controller";
 import { createEstimateLineItemController } from "../controllers/line-item.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
@@ -57,6 +58,13 @@ estimatesRouter.post(
   authorize([UserRole.ADMIN, UserRole.ESTIMATOR]),
   validate({ params: estimateIdParamSchema }),
   finalizeEstimateController,
+);
+
+estimatesRouter.post(
+  "/:id/pdf",
+  authorize([UserRole.ADMIN, UserRole.ESTIMATOR, UserRole.VIEWER]),
+  validate({ params: estimateIdParamSchema }),
+  requestEstimatePdfController,
 );
 
 estimatesRouter.patch(
