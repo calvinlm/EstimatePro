@@ -558,6 +558,32 @@ export type GetFormulasQuery = {
   pageSize?: number;
 };
 
+export type FormulaCreateOrUpdatePayload = {
+  name: string;
+  description: string;
+  category: Category;
+  inputs: FormulaInputDefinition[];
+  expressions: FormulaExpressionDefinition[];
+  outputs: FormulaOutputDefinition[];
+};
+
+export type TestFormulaPayload = {
+  inputValues: Record<string, number>;
+};
+
+export type TestFormulaResponse = {
+  formula: {
+    id: string;
+    name: string;
+    category: Category;
+    version: number;
+    isActive: boolean;
+  };
+  resolvedInputs: Record<string, number>;
+  computedResults: Record<string, number>;
+  outputValues: Record<string, number>;
+};
+
 export type PdfJobStatus = "pending" | "complete" | "failed";
 
 export type RequestEstimatePdfResponse = {
@@ -969,6 +995,63 @@ export async function getFormulaVersions(formulaId: string): Promise<FormulaVers
     {
       method: "GET",
       cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function createFormula(payload: FormulaCreateOrUpdatePayload): Promise<FormulaDetail> {
+  return requestJson<FormulaDetail>(
+    "/formulas",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function updateFormula(
+  formulaId: string,
+  payload: FormulaCreateOrUpdatePayload,
+): Promise<FormulaDetail> {
+  return requestJson<FormulaDetail>(
+    `/formulas/${formulaId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function deactivateFormula(formulaId: string): Promise<FormulaDetail> {
+  return requestJson<FormulaDetail>(
+    `/formulas/${formulaId}/deactivate`,
+    {
+      method: "POST",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function testFormula(
+  formulaId: string,
+  payload: TestFormulaPayload,
+): Promise<TestFormulaResponse> {
+  return requestJson<TestFormulaResponse>(
+    `/formulas/${formulaId}/test`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
     },
     {
       auth: true,
