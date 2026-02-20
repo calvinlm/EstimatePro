@@ -147,6 +147,53 @@ async function requestJson<T>(path: string, init?: RequestInit, options?: Reques
   return payload.data;
 }
 
+async function requestBinary(path: string, init?: RequestInit, options?: RequestOptions): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  const authRequired = options?.auth ?? false;
+  const retryOnUnauthorized = options?.retryOnUnauthorized ?? authRequired;
+
+  if (authRequired) {
+    const accessToken = readAccessToken();
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+  }
+
+  let response = await performJsonRequest(path, {
+    ...init,
+    headers,
+  });
+
+  if (response.status === 401 && authRequired && retryOnUnauthorized) {
+    const didRefresh = await refreshSession();
+    if (didRefresh) {
+      const retryHeaders = new Headers(init?.headers);
+      const nextAccessToken = readAccessToken();
+      if (nextAccessToken) {
+        retryHeaders.set("Authorization", `Bearer ${nextAccessToken}`);
+      }
+
+      response = await performJsonRequest(path, {
+        ...init,
+        headers: retryHeaders,
+      });
+    }
+  }
+
+  if (!response.ok) {
+    const payload = await readErrorPayload(response);
+    throw new ApiError(
+      response.status,
+      payload.code ?? "API_REQUEST_FAILED",
+      payload.message ?? "Request failed",
+      payload.details,
+      payload.requestId,
+    );
+  }
+
+  return response;
+}
+
 export type SetupStatus = {
   required: boolean;
 };
@@ -187,6 +234,347 @@ export type ResetPasswordRequest = {
   token: string;
   newPassword: string;
   confirmPassword: string;
+};
+
+export type ProjectStatus = "ACTIVE" | "ARCHIVED";
+export type EstimateStatus = "DRAFT" | "FINAL" | "ARCHIVED";
+export type LineItemCalculationSource = "MANUAL" | "COMPUTED" | "ADJUSTED";
+
+export type Category =
+  | "CONCRETE_WORKS"
+  | "MASONRY_WORKS"
+  | "PAINTING_WORKS"
+  | "FORMWORKS"
+  | "STEEL_WORKS"
+  | "CARPENTRY"
+  | "DOORS_AND_WINDOWS"
+  | "WATERPROOFING"
+  | "GENERAL_REQUIREMENTS";
+
+export const CATEGORY_VALUES: Category[] = [
+  "CONCRETE_WORKS",
+  "MASONRY_WORKS",
+  "PAINTING_WORKS",
+  "FORMWORKS",
+  "STEEL_WORKS",
+  "CARPENTRY",
+  "DOORS_AND_WINDOWS",
+  "WATERPROOFING",
+  "GENERAL_REQUIREMENTS",
+];
+
+export type Pagination = {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type ProjectSummary = {
+  id: string;
+  name: string;
+  location: string;
+  projectType: string;
+  status: ProjectStatus;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type GetProjectsResponse = {
+  items: ProjectSummary[];
+  pagination: Pagination;
+};
+
+export type GetProjectsQuery = {
+  page?: number;
+  pageSize?: number;
+  status?: ProjectStatus;
+};
+
+export type CreateProjectRequest = {
+  name: string;
+  location: string;
+  projectType: string;
+};
+
+export type ProjectEstimateSummary = {
+  id: string;
+  projectId: string;
+  versionNumber: number;
+  label: string | null;
+  status: EstimateStatus;
+  subtotal: string;
+  markupRate: string;
+  markupAmount: string;
+  vatRate: string;
+  vatAmount: string;
+  totalAmount: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type GetProjectEstimatesResponse = {
+  items: ProjectEstimateSummary[];
+  pagination: Pagination;
+};
+
+export type GetProjectEstimatesQuery = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type CreateEstimateRequest = {
+  label?: string;
+  markupRate: number;
+  vatRate?: number;
+};
+
+export type EstimateSummary = {
+  id: string;
+  projectId: string;
+  versionNumber: number;
+  label: string | null;
+  status: EstimateStatus;
+  subtotal: string;
+  markupRate: string;
+  markupAmount: string;
+  vatRate: string;
+  vatAmount: string;
+  totalAmount: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type EstimateLineItem = {
+  id: string;
+  category: Category;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitMaterialCost: string;
+  unitLaborCost: string;
+  totalCost: string;
+  calculationSource: LineItemCalculationSource;
+  originalComputedQuantity: string | null;
+  originalComputedCost: string | null;
+  overrideReason: string | null;
+  locked: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FormulaUsageRecord = {
+  id: string;
+  lineItemId: string;
+  formulaId: string;
+  formulaVersion: number;
+  formulaSnapshot: unknown;
+  inputValues: Record<string, unknown>;
+  computedResults: Record<string, unknown>;
+  computedAt: string;
+  computedBy: {
+    id: string;
+    name: string;
+  };
+  formula: {
+    id: string;
+    name: string;
+    category: Category;
+    version: number;
+    isActive: boolean;
+    createdAt: string;
+  };
+  lineItem: {
+    id: string;
+    description: string;
+    category: Category;
+  };
+};
+
+export type EstimateDetailsResponse = {
+  estimate: EstimateSummary;
+  lineItems: EstimateLineItem[];
+  formulaUsage: FormulaUsageRecord[];
+};
+
+export type UpdateEstimateRequest = {
+  markupRate: number;
+  vatRate: number;
+};
+
+export type EstimateTotalsSnapshot = {
+  id: string;
+  subtotal: string;
+  markupAmount: string;
+  vatAmount: string;
+  totalAmount: string;
+  updatedAt: string;
+};
+
+export type CreateLineItemRequest = {
+  category: Category;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitMaterialCost: number;
+  unitLaborCost: number;
+};
+
+export type UpdateLineItemRequest = {
+  category?: Category;
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  unitMaterialCost?: number;
+  unitLaborCost?: number;
+};
+
+export type LineItemMutationResponse = {
+  lineItem: EstimateLineItem;
+  estimate: EstimateTotalsSnapshot;
+};
+
+export type OverrideLineItemRequest = {
+  quantity: number;
+  overrideReason: string;
+};
+
+export type DeleteLineItemResponse = {
+  deletedLineItemId: string;
+  estimate: EstimateTotalsSnapshot;
+};
+
+export type ComputeLineItemRequest = {
+  formulaId?: string;
+  formulaName?: string;
+  outputVariable?: string;
+  inputValues: Record<string, unknown>;
+};
+
+export type ComputeLineItemResponse = LineItemMutationResponse & {
+  computation: {
+    id: string;
+    formulaId: string;
+    formulaVersion: number;
+  };
+};
+
+export type FormulaStatus = "ACTIVE" | "INACTIVE";
+
+export type FormulaSummary = {
+  id: string;
+  name: string;
+  description: string;
+  category: Category;
+  currentVersion: number;
+  status: FormulaStatus;
+  isActive: boolean;
+  lastModifiedAt: string;
+  lastModifiedBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type GetFormulasResponse = {
+  items: FormulaSummary[];
+  pagination: Pagination;
+};
+
+export type FormulaInputDefinition = {
+  variable: string;
+  label: string;
+  unit: string;
+  type: "number" | "integer";
+  min?: number;
+  max?: number;
+  defaultValue?: number;
+};
+
+export type FormulaExpressionDefinition = {
+  variable: string;
+  expression: string;
+};
+
+export type FormulaOutputDefinition = {
+  variable: string;
+  lineItemField: "quantity";
+  unit: string;
+};
+
+export type FormulaDetail = {
+  id: string;
+  name: string;
+  description: string;
+  category: Category;
+  version: number;
+  isActive: boolean;
+  previousVersionId: string | null;
+  inputs: FormulaInputDefinition[];
+  expressions: FormulaExpressionDefinition[];
+  outputs: FormulaOutputDefinition[];
+  createdAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type FormulaVersion = {
+  id: string;
+  name: string;
+  description: string;
+  category: Category;
+  version: number;
+  isActive: boolean;
+  previousVersionId: string | null;
+  createdAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+};
+
+export type FormulaVersionsResponse = {
+  rootFormulaId: string;
+  latestFormulaId: string;
+  versions: FormulaVersion[];
+};
+
+export type GetFormulasQuery = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type PdfJobStatus = "pending" | "complete" | "failed";
+
+export type RequestEstimatePdfResponse = {
+  jobId: string;
+  status: PdfJobStatus;
+};
+
+export type PdfJobStatusResponse = {
+  jobId: string;
+  status: PdfJobStatus;
+  downloadUrl?: string;
+  message?: string;
+};
+
+export type DownloadPdfJobResponse = {
+  blob: Blob;
+  fileName: string;
 };
 
 export async function getSetupStatus(): Promise<SetupStatus> {
@@ -281,4 +669,375 @@ export async function logout(): Promise<void> {
   } finally {
     clearAuthSession();
   }
+}
+
+function toQueryString(params: Record<string, string | number | undefined>): string {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined) {
+      return;
+    }
+
+    query.set(key, `${value}`);
+  });
+
+  const encoded = query.toString();
+  return encoded ? `?${encoded}` : "";
+}
+
+export async function getProjects(query: GetProjectsQuery = {}): Promise<GetProjectsResponse> {
+  const queryString = toQueryString({
+    page: query.page,
+    pageSize: query.pageSize,
+    status: query.status,
+  });
+
+  return requestJson<GetProjectsResponse>(
+    `/projects${queryString}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function createProject(payload: CreateProjectRequest): Promise<ProjectSummary> {
+  return requestJson<ProjectSummary>(
+    "/projects",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getProject(projectId: string): Promise<ProjectSummary> {
+  return requestJson<ProjectSummary>(
+    `/projects/${projectId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function archiveProject(projectId: string): Promise<ProjectSummary> {
+  return requestJson<ProjectSummary>(
+    `/projects/${projectId}/archive`,
+    {
+      method: "PATCH",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getProjectEstimates(
+  projectId: string,
+  query: GetProjectEstimatesQuery = {},
+): Promise<GetProjectEstimatesResponse> {
+  const queryString = toQueryString({
+    page: query.page,
+    pageSize: query.pageSize,
+  });
+
+  return requestJson<GetProjectEstimatesResponse>(
+    `/projects/${projectId}/estimates${queryString}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function createEstimate(
+  projectId: string,
+  payload: CreateEstimateRequest,
+): Promise<ProjectEstimateSummary> {
+  return requestJson<ProjectEstimateSummary>(
+    `/projects/${projectId}/estimates`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function duplicateEstimate(estimateId: string): Promise<ProjectEstimateSummary> {
+  return requestJson<ProjectEstimateSummary>(
+    `/estimates/${estimateId}/duplicate`,
+    {
+      method: "POST",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function archiveEstimate(estimateId: string): Promise<ProjectEstimateSummary> {
+  return requestJson<ProjectEstimateSummary>(
+    `/estimates/${estimateId}/archive`,
+    {
+      method: "PATCH",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function softDeleteEstimate(estimateId: string): Promise<ProjectEstimateSummary> {
+  return requestJson<ProjectEstimateSummary>(
+    `/estimates/${estimateId}`,
+    {
+      method: "DELETE",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getEstimate(estimateId: string): Promise<EstimateDetailsResponse> {
+  return requestJson<EstimateDetailsResponse>(
+    `/estimates/${estimateId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function updateEstimate(
+  estimateId: string,
+  payload: UpdateEstimateRequest,
+): Promise<EstimateSummary> {
+  return requestJson<EstimateSummary>(
+    `/estimates/${estimateId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function finalizeEstimate(estimateId: string): Promise<EstimateSummary> {
+  return requestJson<EstimateSummary>(
+    `/estimates/${estimateId}/finalize`,
+    {
+      method: "POST",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function createLineItem(
+  estimateId: string,
+  payload: CreateLineItemRequest,
+): Promise<LineItemMutationResponse> {
+  return requestJson<LineItemMutationResponse>(
+    `/estimates/${estimateId}/line-items`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function updateLineItem(
+  lineItemId: string,
+  payload: UpdateLineItemRequest,
+): Promise<LineItemMutationResponse> {
+  return requestJson<LineItemMutationResponse>(
+    `/line-items/${lineItemId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function overrideLineItem(
+  lineItemId: string,
+  payload: OverrideLineItemRequest,
+): Promise<LineItemMutationResponse> {
+  return requestJson<LineItemMutationResponse>(
+    `/line-items/${lineItemId}/override`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function deleteLineItem(lineItemId: string): Promise<DeleteLineItemResponse> {
+  return requestJson<DeleteLineItemResponse>(
+    `/line-items/${lineItemId}`,
+    {
+      method: "DELETE",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function computeLineItem(
+  lineItemId: string,
+  payload: ComputeLineItemRequest,
+): Promise<ComputeLineItemResponse> {
+  return requestJson<ComputeLineItemResponse>(
+    `/line-items/${lineItemId}/compute`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getFormulas(query: GetFormulasQuery = {}): Promise<GetFormulasResponse> {
+  const queryString = toQueryString({
+    page: query.page,
+    pageSize: query.pageSize,
+  });
+
+  return requestJson<GetFormulasResponse>(
+    `/formulas${queryString}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getFormula(formulaId: string): Promise<FormulaDetail> {
+  return requestJson<FormulaDetail>(
+    `/formulas/${formulaId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getFormulaVersions(formulaId: string): Promise<FormulaVersionsResponse> {
+  return requestJson<FormulaVersionsResponse>(
+    `/formulas/${formulaId}/versions`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+function parseDownloadFilename(disposition: string | null, fallback: string): string {
+  if (!disposition) {
+    return fallback;
+  }
+
+  const starMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (starMatch?.[1]) {
+    return decodeURIComponent(starMatch[1]);
+  }
+
+  const filenameMatch = disposition.match(/filename=\"?([^\";]+)\"?/i);
+  if (filenameMatch?.[1]) {
+    return filenameMatch[1];
+  }
+
+  return fallback;
+}
+
+export async function requestEstimatePdf(estimateId: string): Promise<RequestEstimatePdfResponse> {
+  return requestJson<RequestEstimatePdfResponse>(
+    `/estimates/${estimateId}/pdf`,
+    {
+      method: "POST",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getPdfJobStatus(jobId: string): Promise<PdfJobStatusResponse> {
+  return requestJson<PdfJobStatusResponse>(
+    `/pdf-jobs/${jobId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function downloadPdfJob(jobId: string): Promise<DownloadPdfJobResponse> {
+  const response = await requestBinary(
+    `/pdf-jobs/${jobId}/download`,
+    {
+      method: "GET",
+    },
+    {
+      auth: true,
+    },
+  );
+
+  const blob = await response.blob();
+  const fileName = parseDownloadFilename(
+    response.headers.get("content-disposition"),
+    `estimate-${jobId}.pdf`,
+  );
+
+  return {
+    blob,
+    fileName,
+  };
 }

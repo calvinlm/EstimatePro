@@ -111,7 +111,10 @@ export function AppShell({ children }: AppShellProps) {
           <nav className="flex-1 p-3" aria-label="Primary">
             <ul className="space-y-1">
               {navItems.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const active =
+                  item.href === "/"
+                    ? pathname === "/" || pathname.startsWith("/projects")
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <li key={item.href}>
                     <Link
