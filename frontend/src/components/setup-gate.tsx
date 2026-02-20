@@ -51,7 +51,7 @@ export function SetupGate({ children }: SetupGateProps) {
 
   if (!isChecked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-200">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] text-[var(--color-text-muted)]">
         <p className="text-sm">Loading setup status...</p>
       </div>
     );

@@ -3,21 +3,50 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 6px;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #dbe5ee;
+  --color-border: #d5dde8;
+  --color-text: #1f2937;
+  --color-text-muted: #5b6b80;
+  --color-accent: #ea580c;
+  --color-accent-strong: #c2410c;
+  --color-accent-soft: #fff2e8;
+  --color-ring: #94a3b8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-surface: #111827;
+  --color-surface-2: #1f2937;
+  --color-surface-3: #334155;
+  --color-border: #334155;
+  --color-text: #f3f4f6;
+  --color-text-muted: #9ca3af;
+  --color-accent: #fb923c;
+  --color-accent-strong: #fdba74;
+  --color-accent-soft: #3a2516;
+  --color-ring: #64748b;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: var(--font-geist-sans), sans-serif;
+  color: var(--color-text);
+  background: radial-gradient(circle at 10% 10%, var(--color-surface-2), var(--color-bg) 40%);
+  min-height: 100vh;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+input,
+button,
+select,
+textarea {
+  border-radius: var(--radius);
 }
 
 @layer utilities {

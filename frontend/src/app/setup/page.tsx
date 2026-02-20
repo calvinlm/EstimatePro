@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { postSetup, type SetupRequest } from "@/lib/api";
-import { storeTokenPair } from "@/lib/auth";
+import { storeAuthSession } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type FormState = SetupRequest;
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -90,10 +93,7 @@ export default function SetupPage() {
         confirmPassword: form.confirmPassword,
       });
 
-      storeTokenPair({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      });
+      storeAuthSession(result);
 
       router.replace("/");
     } catch (error) {
@@ -105,97 +105,90 @@ export default function SetupPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-      <section className="w-full max-w-lg rounded-lg border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
+    <main className="grid min-h-screen place-items-center bg-[var(--color-bg)] px-4 py-8 text-[var(--color-text)]">
+      <section className="w-full max-w-lg rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-xl">
         <h1 className="text-2xl font-semibold">First-Run Setup</h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
           Create your organization and first admin account to start using EstimatePro PH.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
           <div>
-            <label htmlFor="organizationName" className="mb-1 block text-sm font-medium">
-              Organization Name
-            </label>
-            <input
+            <Label htmlFor="organizationName">Organization Name</Label>
+            <Input
               id="organizationName"
               value={form.organizationName}
               onChange={(event) => updateField("organizationName", event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-offset-2 focus:border-slate-500 focus:ring-2 focus:ring-slate-500"
             />
             {errors.organizationName ? (
-              <p className="mt-1 text-sm text-rose-400">{errors.organizationName}</p>
+              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.organizationName}</p>
             ) : null}
           </div>
 
           <div>
-            <label htmlFor="adminFullName" className="mb-1 block text-sm font-medium">
-              Admin Full Name
-            </label>
-            <input
+            <Label htmlFor="adminFullName">Admin Full Name</Label>
+            <Input
               id="adminFullName"
               value={form.adminFullName}
               onChange={(event) => updateField("adminFullName", event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-offset-2 focus:border-slate-500 focus:ring-2 focus:ring-slate-500"
             />
             {errors.adminFullName ? (
-              <p className="mt-1 text-sm text-rose-400">{errors.adminFullName}</p>
+              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.adminFullName}</p>
             ) : null}
           </div>
 
           <div>
-            <label htmlFor="adminEmail" className="mb-1 block text-sm font-medium">
-              Admin Email
-            </label>
-            <input
+            <Label htmlFor="adminEmail">Admin Email</Label>
+            <Input
               id="adminEmail"
               type="email"
               value={form.adminEmail}
               onChange={(event) => updateField("adminEmail", event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-offset-2 focus:border-slate-500 focus:ring-2 focus:ring-slate-500"
             />
-            {errors.adminEmail ? <p className="mt-1 text-sm text-rose-400">{errors.adminEmail}</p> : null}
+            {errors.adminEmail ? (
+              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.adminEmail}</p>
+            ) : null}
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium">
-              Password
-            </label>
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
               id="password"
               type="password"
               value={form.password}
               onChange={(event) => updateField("password", event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-offset-2 focus:border-slate-500 focus:ring-2 focus:ring-slate-500"
             />
-            {errors.password ? <p className="mt-1 text-sm text-rose-400">{errors.password}</p> : null}
+            {errors.password ? (
+              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.password}</p>
+            ) : null}
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium">
-              Confirm Password
-            </label>
-            <input
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
               id="confirmPassword"
               type="password"
               value={form.confirmPassword}
               onChange={(event) => updateField("confirmPassword", event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-offset-2 focus:border-slate-500 focus:ring-2 focus:ring-slate-500"
             />
             {errors.confirmPassword ? (
-              <p className="mt-1 text-sm text-rose-400">{errors.confirmPassword}</p>
+              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.confirmPassword}</p>
             ) : null}
           </div>
 
-          {submitError ? <p className="text-sm text-rose-400">{submitError}</p> : null}
+          {submitError ? (
+            <p role="alert" className="text-sm text-rose-600 dark:text-rose-300">
+              {submitError}
+            </p>
+          ) : null}
 
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting || hasErrors}
-            className="w-full rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 transition disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full"
           >
             {isSubmitting ? "Setting up..." : "Create Organization"}
-          </button>
+          </Button>
         </form>
       </section>
     </main>
