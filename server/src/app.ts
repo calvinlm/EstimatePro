@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import type { Application, NextFunction, Request, Response } from "express";
 import { authRouter } from "./routes/auth.routes";
 import { estimatesRouter } from "./routes/estimates.routes";
+import { formulasRouter } from "./routes/formulas.routes";
+import { lineItemsRouter } from "./routes/line-items.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { setupRouter } from "./routes/setup.routes";
 
@@ -61,6 +63,8 @@ export function createApp(): Application {
 
   app.use("/auth", authRouter);
   app.use("/estimates", estimatesRouter);
+  app.use("/formulas", formulasRouter);
+  app.use("/line-items", lineItemsRouter);
   app.use("/projects", projectsRouter);
   app.use("/setup", setupRouter);
 

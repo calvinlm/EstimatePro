@@ -9,11 +9,16 @@ import {
   softDeleteEstimateController,
   updateEstimateController,
 } from "../controllers/estimate.controller";
+import { createEstimateLineItemController } from "../controllers/line-item.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
 import { scopeToOrg } from "../middleware/scopeToOrg";
 import { validate } from "../middleware/validate";
 import { estimateIdParamSchema, updateEstimateBodySchema } from "../schemas/estimate.schemas";
+import {
+  createEstimateLineItemBodySchema,
+  estimateLineItemsParamSchema,
+} from "../schemas/line-item.schemas";
 
 const estimatesRouter = Router();
 
@@ -31,6 +36,13 @@ estimatesRouter.patch(
   authorize([UserRole.ADMIN, UserRole.ESTIMATOR]),
   validate({ params: estimateIdParamSchema, body: updateEstimateBodySchema }),
   updateEstimateController,
+);
+
+estimatesRouter.post(
+  "/:estimateId/line-items",
+  authorize([UserRole.ADMIN, UserRole.ESTIMATOR]),
+  validate({ params: estimateLineItemsParamSchema, body: createEstimateLineItemBodySchema }),
+  createEstimateLineItemController,
 );
 
 estimatesRouter.post(
