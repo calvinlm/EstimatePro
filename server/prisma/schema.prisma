@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organization {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime   @default(now())
+  auditLogs AuditLog[]
+  formulas  Formula[]
+  projects  Project[]
+  users     User[]
+}
+
+model User {
+  id                  String                @id @default(uuid()) @db.Uuid
+  organizationId      String                @db.Uuid
+  name                String
+  email               String                @unique
+  passwordHash        String
+  role                UserRole
+  status              UserStatus
+  createdAt           DateTime              @default(now())
+  auditLogs           AuditLog[]
+  computations        ComputationInstance[]
+  estimates           Estimate[]
+  formulas            Formula[]
+  lineItems           LineItem[]
+  passwordResetTokens PasswordResetToken[]
+  refreshTokens       RefreshToken[]
+  projects            Project[]
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Project {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  name           String
+  location       String
+  projectType    String
+  status         ProjectStatus
+  createdBy      String        @db.Uuid
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  estimates      Estimate[]
+  createdByUser  User          @relation(fields: [createdBy], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Estimate {
+  id            String                @id @default(uuid()) @db.Uuid
+  projectId     String                @db.Uuid
+  versionNumber Int
+  label         String?
+  status        EstimateStatus
+  subtotal      Decimal
+  markupRate    Decimal
+  markupAmount  Decimal
+  vatRate       Decimal
+  vatAmount     Decimal
+  totalAmount   Decimal
+  createdBy     String                @db.Uuid
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  deletedAt     DateTime?
+  computations  ComputationInstance[]
+  createdByUser User                  @relation(fields: [createdBy], references: [id])
+  project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lineItems     LineItem[]
+
+  @@index([projectId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model LineItem {
+  id                       String                @id @default(uuid()) @db.Uuid
+  estimateId               String                @db.Uuid
+  category                 Category
+  description              String
+  quantity                 Decimal
+  unit                     String
+  unitMaterialCost         Decimal
+  unitLaborCost            Decimal
+  totalCost                Decimal
+  calculationSource        CalculationSource
+  originalComputedQuantity Decimal?
+  originalComputedCost     Decimal?
+  overrideReason           String?
+  locked                   Boolean
+  createdBy                String                @db.Uuid
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  computations             ComputationInstance[]
+  createdByUser            User                  @relation(fields: [createdBy], references: [id])
+  estimate                 Estimate              @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@index([estimateId])
+  @@index([createdAt])
+}
+
+model Formula {
+  id                String                @id @default(uuid()) @db.Uuid
+  organizationId    String                @db.Uuid
+  name              String
+  description       String
+  category          Category
+  version           Int
+  inputs            Json
+  expressions       Json
+  outputs           Json
+  isActive          Boolean               @default(true)
+  createdBy         String                @db.Uuid
+  createdAt         DateTime              @default(now())
+  previousVersionId String?               @db.Uuid
+  computations      ComputationInstance[]
+  createdByUser     User                  @relation(fields: [createdBy], references: [id])
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  previousVersion   Formula?              @relation("FormulaVersionChain", fields: [previousVersionId], references: [id])
+  nextVersions      Formula[]             @relation("FormulaVersionChain")
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model ComputationInstance {
+  id              String   @id @default(uuid()) @db.Uuid
+  estimateId      String   @db.Uuid
+  lineItemId      String   @db.Uuid
+  formulaId       String   @db.Uuid
+  formulaVersion  Int
+  formulaSnapshot Json
+  inputValues     Json
+  computedResults Json
+  computedBy      String   @db.Uuid
+  computedAt      DateTime @default(now())
+  computedByUser  User     @relation(fields: [computedBy], references: [id])
+  estimate        Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  formula         Formula  @relation(fields: [formulaId], references: [id])
+  lineItem        LineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @db.Uuid
+  entityType      String
+  entityId        String       @db.Uuid
+  action          String
+  beforeState     Json
+  afterState      Json
+  performedBy     String       @db.Uuid
+  performedAt     DateTime     @default(now())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  performedByUser User         @relation(fields: [performedBy], references: [id])
+
+  @@index([organizationId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  jti        String    @unique
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum UserRole {
+  ADMIN
+  ESTIMATOR
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum EstimateStatus {
+  DRAFT
+  FINAL
+  ARCHIVED
+}
+
+enum Category {
+  CONCRETE_WORKS
+  MASONRY_WORKS
+  PAINTING_WORKS
+  FORMWORKS
+  STEEL_WORKS
+  CARPENTRY
+  DOORS_AND_WINDOWS
+  WATERPROOFING
+  GENERAL_REQUIREMENTS
+}
+
+enum CalculationSource {
+  MANUAL
+  COMPUTED
+  ADJUSTED
+}
