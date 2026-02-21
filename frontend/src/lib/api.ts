@@ -236,6 +236,13 @@ export type ResetPasswordRequest = {
   confirmPassword: string;
 };
 
+export type AcceptInviteRequest = {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+  name?: string;
+};
+
 export type ProjectStatus = "ACTIVE" | "ARCHIVED";
 export type EstimateStatus = "DRAFT" | "FINAL" | "ARCHIVED";
 export type LineItemCalculationSource = "MANUAL" | "COMPUTED" | "ADJUSTED";
@@ -738,6 +745,20 @@ export async function forgotPassword(payload: ForgotPasswordRequest): Promise<{ 
 export async function resetPassword(payload: ResetPasswordRequest): Promise<{ success: true }> {
   return requestJson<{ success: true }>(
     "/auth/reset-password",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: false,
+      retryOnUnauthorized: false,
+    },
+  );
+}
+
+export async function acceptInvite(payload: AcceptInviteRequest): Promise<UserMutationResponse> {
+  return requestJson<UserMutationResponse>(
+    "/users/accept-invite",
     {
       method: "POST",
       body: JSON.stringify(payload),

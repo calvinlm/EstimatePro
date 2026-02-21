@@ -1,0 +1,132 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { acceptInvite } from "@/lib/api";
+
+export default function AcceptInvitePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = useMemo(() => searchParams.get("token")?.trim() ?? "", [searchParams]);
+
+  const [name, setName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (!token) {
+      setErrorMessage("Invite token is missing or invalid.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setErrorMessage("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage("Passwords must match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await acceptInvite({
+        token,
+        newPassword,
+        confirmPassword,
+        ...(name.trim().length > 0 ? { name: name.trim() } : {}),
+      });
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.replace("/login");
+      }, 1200);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invite acceptance failed";
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="grid min-h-screen place-items-center bg-[var(--color-bg)] px-4 py-10">
+      <section className="w-full max-w-md rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+          EstimatePro PH
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold">Set up your account</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+          Complete your invite by setting your account details.
+        </p>
+
+        <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
+          <div>
+            <Label htmlFor="name">Full Name (optional)</Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+            />
+          </div>
+          <div>
+            <Label htmlFor="newPassword">Password</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+
+          {errorMessage ? (
+            <p role="alert" className="text-sm text-rose-600 dark:text-rose-300">
+              {errorMessage}
+            </p>
+          ) : null}
+          {isSuccess ? (
+            <p className="text-sm text-emerald-700 dark:text-emerald-300">
+              Account setup complete. Redirecting to login...
+            </p>
+          ) : null}
+
+          <Button type="submit" className="w-full" disabled={isSubmitting || isSuccess}>
+            {isSubmitting ? "Setting up..." : "Complete Setup"}
+          </Button>
+        </form>
+
+        <p className="mt-4 text-sm">
+          <Link href="/login" className="font-medium text-[var(--color-accent-strong)] hover:underline">
+            Back to login
+          </Link>
+        </p>
+      </section>
+    </main>
+  );
+}

@@ -52,3 +52,7 @@ npm run dev:frontend
 npm run lint
 npm run format:check
 ```
+
+## Deployment
+
+For manual production deployment using Supabase + Render + Vercel, see `DEPLOYMENT.md`.
