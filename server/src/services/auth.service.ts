@@ -134,8 +134,13 @@ function getFrontendBaseUrl(): string {
     .map((origin) => origin.trim())
     .find((origin) => origin.length > 0);
 
-  return configuredOrigin ?? "http://localhost:3000";
+  if (!configuredOrigin) {
+    throw new AppError(500, "SERVER_MISCONFIGURED", "FRONTEND_URL is not configured");
+  }
+
+  return configuredOrigin.replace(/\/+$/, "");
 }
+
 
 function buildResetPasswordLink(token: string): string {
   const baseUrl = getFrontendBaseUrl().replace(/\/+$/, "");
