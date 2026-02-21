@@ -523,30 +523,34 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
               </Button>
             </div>
             <div className="space-y-3">
-              {inputs.map((row) => (
+              {inputs.map((row, rowIndex) => (
                 <div key={row.id} className="grid gap-2 rounded-md border border-[var(--color-border)] p-3 md:grid-cols-8">
                   <Input
                     value={row.variable}
                     onChange={(event) => updateInputRow(row.id, "variable", event.target.value)}
                     placeholder="variable"
+                    aria-label={`Input definition row ${rowIndex + 1} variable`}
                     disabled={!isAdmin || isSaving}
                   />
                   <Input
                     value={row.label}
                     onChange={(event) => updateInputRow(row.id, "label", event.target.value)}
                     placeholder="label"
+                    aria-label={`Input definition row ${rowIndex + 1} label`}
                     disabled={!isAdmin || isSaving}
                   />
                   <Input
                     value={row.unit}
                     onChange={(event) => updateInputRow(row.id, "unit", event.target.value)}
                     placeholder="unit"
+                    aria-label={`Input definition row ${rowIndex + 1} unit`}
                     disabled={!isAdmin || isSaving}
                   />
                   <select
                     className={SELECT_CLASS}
                     value={row.type}
                     onChange={(event) => updateInputRow(row.id, "type", event.target.value)}
+                    aria-label={`Input definition row ${rowIndex + 1} type`}
                     disabled={!isAdmin || isSaving}
                   >
                     <option value="number">number</option>
@@ -556,6 +560,7 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
                     value={row.min}
                     onChange={(event) => updateInputRow(row.id, "min", event.target.value)}
                     placeholder="min"
+                    aria-label={`Input definition row ${rowIndex + 1} minimum`}
                     type="number"
                     disabled={!isAdmin || isSaving}
                   />
@@ -563,6 +568,7 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
                     value={row.max}
                     onChange={(event) => updateInputRow(row.id, "max", event.target.value)}
                     placeholder="max"
+                    aria-label={`Input definition row ${rowIndex + 1} maximum`}
                     type="number"
                     disabled={!isAdmin || isSaving}
                   />
@@ -570,6 +576,7 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
                     value={row.defaultValue}
                     onChange={(event) => updateInputRow(row.id, "defaultValue", event.target.value)}
                     placeholder="default"
+                    aria-label={`Input definition row ${rowIndex + 1} default value`}
                     type="number"
                     disabled={!isAdmin || isSaving}
                   />
@@ -595,19 +602,21 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
               </Button>
             </div>
             <div className="space-y-3">
-              {expressions.map((row) => (
+              {expressions.map((row, rowIndex) => (
                 <div key={row.id} className="space-y-2 rounded-md border border-[var(--color-border)] p-3">
                   <div className="grid gap-2 md:grid-cols-[220px_1fr_120px]">
                     <Input
                       value={row.variable}
                       onChange={(event) => updateExpressionRow(row.id, "variable", event.target.value)}
                       placeholder="variable"
+                      aria-label={`Expression row ${rowIndex + 1} variable`}
                       disabled={!isAdmin || isSaving}
                     />
                     <Input
                       value={row.expression}
                       onChange={(event) => updateExpressionRow(row.id, "expression", event.target.value)}
                       placeholder="expression"
+                      aria-label={`Expression row ${rowIndex + 1} expression`}
                       disabled={!isAdmin || isSaving}
                     />
                     <Button
@@ -638,18 +647,20 @@ export function FormulaEditor({ formulaId }: FormulaEditorProps) {
               </Button>
             </div>
             <div className="space-y-3">
-              {outputs.map((row) => (
+              {outputs.map((row, rowIndex) => (
                 <div key={row.id} className="grid gap-2 rounded-md border border-[var(--color-border)] p-3 md:grid-cols-[1fr_1fr_180px_120px]">
                   <Input
                     value={row.variable}
                     onChange={(event) => updateOutputRow(row.id, "variable", event.target.value)}
                     placeholder="variable"
+                    aria-label={`Output mapping row ${rowIndex + 1} variable`}
                     disabled={!isAdmin || isSaving}
                   />
                   <Input
                     value={row.unit}
                     onChange={(event) => updateOutputRow(row.id, "unit", event.target.value)}
                     placeholder="unit"
+                    aria-label={`Output mapping row ${rowIndex + 1} unit`}
                     disabled={!isAdmin || isSaving}
                   />
                   <Input value="quantity" disabled aria-label="line item field" />

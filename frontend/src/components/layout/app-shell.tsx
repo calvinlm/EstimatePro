@@ -12,10 +12,12 @@ import { cn } from "@/lib/cn";
 
 const SIDEBAR_COLLAPSED_KEY = "estimatepro_sidebar_collapsed";
 
+type NavIcon = "projects" | "formulas" | "audit" | "settings";
+
 const navItems = [
-  { href: "/", label: "Projects" },
-  { href: "/formulas", label: "Formula Library" },
-  { href: "/audit", label: "Audit Log" },
+  { href: "/", label: "Projects", icon: "projects" as NavIcon },
+  { href: "/formulas", label: "Formula Library", icon: "formulas" as NavIcon },
+  { href: "/audit", label: "Audit Log", icon: "audit" as NavIcon },
 ];
 
 type AppShellProps = {
@@ -41,6 +43,104 @@ function formatPathSegment(segment: string): string {
     .join(" ");
 }
 
+function getBackFallbackPath(pathname: string): string {
+  if (pathname.startsWith("/projects/")) {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length >= 4 && segments[2] === "estimates") {
+      return `/projects/${segments[1]}`;
+    }
+    return "/";
+  }
+
+  if (pathname.startsWith("/formulas/")) {
+    return "/formulas";
+  }
+
+  if (pathname.startsWith("/settings/")) {
+    return "/settings/users";
+  }
+
+  return "/";
+}
+
+function SidebarIcon({ icon, className }: { icon: NavIcon; className?: string }) {
+  if (icon === "projects") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+        <path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  if (icon === "formulas") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M18 5H7l6 7-6 7h11M6 5h2M6 19h2"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "audit") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M8 3h8l2 2h2v16H4V5h2l2-2zM8 9h8M8 13h8M8 17h5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M12 3v2M12 19v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M3 12h2M19 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 16a4 4 0 100-8 4 4 0 000 8z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ThemeIcon({ theme, className }: { theme: "light" | "dark"; className?: string }) {
+  if (theme === "light") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M12 3v2M12 19v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M3 12h2M19 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 16a4 4 0 100-8 4 4 0 000 8z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -48,6 +148,13 @@ export function AppShell({ children }: AppShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(getInitialSidebarCollapsed);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const user = readAuthUser();
+  const visibleNavItems = useMemo(() => {
+    if (user?.role === "ADMIN") {
+      return [...navItems, { href: "/settings/users", label: "Settings", icon: "settings" as NavIcon }];
+    }
+
+    return navItems;
+  }, [user?.role]);
 
   const breadcrumb = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);
@@ -57,6 +164,19 @@ export function AppShell({ children }: AppShellProps) {
 
     return segments.map((segment) => formatPathSegment(segment));
   }, [pathname]);
+  const isRootPage = pathname === "/";
+
+  function goBack(): void {
+    if (typeof window !== "undefined") {
+      const state = window.history.state as { idx?: number } | null;
+      if (typeof state?.idx === "number" && state.idx > 0) {
+        router.back();
+        return;
+      }
+    }
+
+    router.push(getBackFallbackPath(pathname));
+  }
 
   async function handleLogout(): Promise<void> {
     setIsLoggingOut(true);
@@ -80,7 +200,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <aside
         className={cn(
-          "border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-[width] duration-200",
+          "sticky top-0 h-screen shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-[width] duration-200",
           isSidebarCollapsed ? "w-20" : "w-72",
         )}
       >
@@ -103,14 +223,14 @@ export function AppShell({ children }: AppShellProps) {
                 onClick={toggleSidebar}
                 aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                {isSidebarCollapsed ? "»" : "«"}
+                {isSidebarCollapsed ? ">>" : "<<"}
               </button>
             </div>
           </div>
 
-          <nav className="flex-1 p-3" aria-label="Primary">
+          <nav className="flex-1 overflow-y-auto p-3" aria-label="Primary">
             <ul className="space-y-1">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const active =
                   item.href === "/"
                     ? pathname === "/" || pathname.startsWith("/projects")
@@ -119,6 +239,7 @@ export function AppShell({ children }: AppShellProps) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      aria-label={isSidebarCollapsed ? item.label : undefined}
                       className={cn(
                         "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
                         active
@@ -126,7 +247,7 @@ export function AppShell({ children }: AppShellProps) {
                           : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]",
                       )}
                     >
-                      <span aria-hidden="true">•</span>
+                      <SidebarIcon icon={item.icon} className="h-4 w-4 shrink-0" />
                       {!isSidebarCollapsed ? <span>{item.label}</span> : null}
                     </Link>
                   </li>
@@ -159,11 +280,38 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-6 py-4 backdrop-blur">
           <div className="flex items-center justify-between gap-4">
-            <nav aria-label="Breadcrumb" className="text-sm text-[var(--color-text-muted)]">
-              {breadcrumb.join(" / ")}
-            </nav>
-            <Button variant="ghost" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === "light" ? "Dark" : "Light"}
+            <div className="flex min-w-0 items-center gap-3">
+              <Button
+                variant="secondary"
+                className="h-9 gap-2 px-3"
+                onClick={goBack}
+                disabled={isRootPage}
+                aria-label="Go to previous page"
+                title="Back"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+                  <path
+                    d="M15 18l-6-6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>Back</span>
+              </Button>
+              <nav aria-label="Breadcrumb" className="truncate text-sm text-[var(--color-text-muted)]">
+                {breadcrumb.join(" / ")}
+              </nav>
+            </div>
+            <Button
+              variant="ghost"
+              className="h-12 w-12 p-0"
+              onClick={toggleTheme}
+              aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              title={theme === "light" ? "Dark mode" : "Light mode"}
+            >
+              <ThemeIcon theme={theme} className="h-6 w-6" />
             </Button>
           </div>
         </header>

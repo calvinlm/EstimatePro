@@ -199,6 +199,13 @@ export default function ProjectDetailPage() {
     }
   }
 
+  function onEstimateRowKeyDown(event: React.KeyboardEvent<HTMLTableRowElement>, estimateId: string): void {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      router.push(`/projects/${projectId}/estimates/${estimateId}`);
+    }
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -243,16 +250,16 @@ export default function ProjectDetailPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table role="table" className="w-full text-sm">
             <thead className="bg-[var(--color-surface-2)] text-left text-[var(--color-text-muted)]">
               <tr>
-                <th className="px-4 py-3 font-medium">Version</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Total Amount</th>
-                <th className="px-4 py-3 font-medium">Created By</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium">Last Modified</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th scope="col" className="px-4 py-3 font-medium">Version</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium">Total Amount</th>
+                <th scope="col" className="px-4 py-3 font-medium">Created By</th>
+                <th scope="col" className="px-4 py-3 font-medium">Created</th>
+                <th scope="col" className="px-4 py-3 font-medium">Last Modified</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -260,7 +267,11 @@ export default function ProjectDetailPage() {
                 <tr
                   key={estimate.id}
                   className="cursor-pointer border-t border-[var(--color-border)] transition-colors hover:bg-[var(--color-surface-2)]"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open estimate version ${estimate.versionNumber}`}
                   onClick={() => router.push(`/projects/${projectId}/estimates/${estimate.id}`)}
+                  onKeyDown={(event) => onEstimateRowKeyDown(event, estimate.id)}
                 >
                   <td className="px-4 py-3">
                     <p className="font-medium">
@@ -461,3 +472,4 @@ export default function ProjectDetailPage() {
     </section>
   );
 }
+

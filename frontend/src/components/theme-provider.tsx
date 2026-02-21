@@ -17,19 +17,32 @@ type ThemeProviderProps = {
   children: React.ReactNode;
 };
 
+function applyTheme(theme: Theme): void {
+  document.documentElement.setAttribute("data-theme", theme);
+  document.documentElement.style.colorScheme = theme;
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>("light");
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    const resolvedTheme = stored === "dark" ? "dark" : "light";
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolvedTheme = stored === "dark" || (stored === null && prefersDark) ? "dark" : "light";
     setThemeState(resolvedTheme);
+    applyTheme(resolvedTheme);
+    setIsHydrated(true);
   }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    if (!isHydrated) {
+      return;
+    }
+
+    applyTheme(theme);
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
+  }, [isHydrated, theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

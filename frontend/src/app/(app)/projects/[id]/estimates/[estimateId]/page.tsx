@@ -1082,33 +1082,33 @@ export default function EstimateEditorPage() {
                         Subtotal: {formatCurrencyPhp(group.subtotal)}
                       </p>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[1050px] text-sm">
+                    <div>
+                      <table role="table" className="w-full table-fixed text-sm">
                         <thead className="text-left text-[var(--color-text-muted)]">
                           <tr>
-                            <th className="px-4 py-3 font-medium">Category</th>
-                            <th className="px-4 py-3 font-medium">Description</th>
-                            <th className="px-4 py-3 font-medium">Quantity</th>
-                            <th className="px-4 py-3 font-medium">Unit</th>
-                            <th className="px-4 py-3 font-medium">Unit Material</th>
-                            <th className="px-4 py-3 font-medium">Unit Labor</th>
-                            <th className="px-4 py-3 font-medium">Total</th>
-                            <th className="px-4 py-3 font-medium">Source</th>
-                            <th className="px-4 py-3 font-medium">Override</th>
-                            <th className="px-4 py-3 text-right font-medium">Actions</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Category</th>
+                            <th scope="col" className="px-4 py-3 font-medium">Description</th>
+                            <th scope="col" className="px-4 py-3 font-medium">Quantity</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Unit</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Unit Material</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Unit Labor</th>
+                            <th scope="col" className="px-4 py-3 font-medium">Total</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Source</th>
+                            <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Override</th>
+                            <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {group.items.map((lineItem) => (
                             <tr key={lineItem.id} className="border-t border-[var(--color-border)]">
-                              <td className="px-4 py-3">{formatCategoryLabel(lineItem.category)}</td>
-                              <td className="px-4 py-3">{lineItem.description}</td>
+                              <td className="hidden px-4 py-3 md:table-cell">{formatCategoryLabel(lineItem.category)}</td>
+                              <td className="px-4 py-3 break-words">{lineItem.description}</td>
                               <td className="px-4 py-3">{formatQuantity(lineItem.quantity)}</td>
-                              <td className="px-4 py-3">{lineItem.unit}</td>
-                              <td className="px-4 py-3">{formatCurrencyPhp(lineItem.unitMaterialCost)}</td>
-                              <td className="px-4 py-3">{formatCurrencyPhp(lineItem.unitLaborCost)}</td>
+                              <td className="hidden px-4 py-3 md:table-cell">{lineItem.unit}</td>
+                              <td className="hidden px-4 py-3 lg:table-cell">{formatCurrencyPhp(lineItem.unitMaterialCost)}</td>
+                              <td className="hidden px-4 py-3 lg:table-cell">{formatCurrencyPhp(lineItem.unitLaborCost)}</td>
                               <td className="px-4 py-3 font-medium">{formatCurrencyPhp(lineItem.totalCost)}</td>
-                              <td className="px-4 py-3">
+                              <td className="hidden px-4 py-3 lg:table-cell">
                                 <Badge
                                   variant={
                                     lineItem.calculationSource === "COMPUTED"
@@ -1121,14 +1121,14 @@ export default function EstimateEditorPage() {
                                   {lineItem.calculationSource}
                                 </Badge>
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="hidden px-4 py-3 lg:table-cell">
                                 <Badge variant={lineItem.overrideReason ? "warning" : "neutral"}>
                                   {lineItem.overrideReason ? "Yes" : "No"}
                                 </Badge>
                               </td>
                               <td className="px-4 py-3 text-right">
                                 {!isReadOnly ? (
-                                  <div className="flex justify-end gap-1">
+                                  <div className="flex flex-wrap justify-end gap-1">
                                     <Button
                                       variant="ghost"
                                       className="h-8 px-2 text-xs"
@@ -1739,4 +1739,6 @@ export default function EstimateEditorPage() {
     </section>
   );
 }
+
+
 

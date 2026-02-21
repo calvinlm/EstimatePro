@@ -13,13 +13,14 @@ import { readAuthUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 
 const PAGE_SIZE = 20;
+const SELECT_CLASS =
+  "h-10 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]";
 
 type StatusFilter = "ALL" | ProjectStatus;
 
@@ -167,6 +168,13 @@ export default function DashboardPage() {
     }
   }
 
+  function onProjectRowKeyDown(event: React.KeyboardEvent<HTMLTableRowElement>, projectId: string): void {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      router.push(`/projects/${projectId}`);
+    }
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -191,18 +199,19 @@ export default function DashboardPage() {
           placeholder="Search by project name"
           aria-label="Search projects"
         />
-        <Dropdown
+        <select
+          className={SELECT_CLASS}
+          aria-label="Filter projects by status"
           value={statusFilter}
-          onSelect={(value) => {
-            setStatusFilter(value as StatusFilter);
+          onChange={(event) => {
+            setStatusFilter(event.target.value as StatusFilter);
             setPage(1);
           }}
-          options={[
-            { label: "All statuses", value: "ALL" },
-            { label: "Active", value: "ACTIVE" },
-            { label: "Archived", value: "ARCHIVED" },
-          ]}
-        />
+        >
+          <option value="ALL">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="ARCHIVED">Archived</option>
+        </select>
       </div>
 
       {errorMessage ? (
@@ -229,15 +238,15 @@ export default function DashboardPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table role="table" className="w-full text-sm">
             <thead className="bg-[var(--color-surface-2)] text-left text-[var(--color-text-muted)]">
               <tr>
-                <th className="px-4 py-3 font-medium">Project</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Updated</th>
-                <th className="px-4 py-3 font-medium">Created By</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th scope="col" className="px-4 py-3 font-medium">Project</th>
+                <th scope="col" className="px-4 py-3 font-medium">Type</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium">Updated</th>
+                <th scope="col" className="px-4 py-3 font-medium">Created By</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -245,7 +254,11 @@ export default function DashboardPage() {
                 <tr
                   key={project.id}
                   className="cursor-pointer border-t border-[var(--color-border)] transition-colors hover:bg-[var(--color-surface-2)]"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open project ${project.name}`}
                   onClick={() => router.push(`/projects/${project.id}`)}
+                  onKeyDown={(event) => onProjectRowKeyDown(event, project.id)}
                 >
                   <td className="px-4 py-3">
                     <p className="font-medium">{project.name}</p>
@@ -369,3 +382,4 @@ export default function DashboardPage() {
     </section>
   );
 }
+

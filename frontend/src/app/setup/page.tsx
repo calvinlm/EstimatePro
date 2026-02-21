@@ -121,7 +121,9 @@ export default function SetupPage() {
               onChange={(event) => updateField("organizationName", event.target.value)}
             />
             {errors.organizationName ? (
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.organizationName}</p>
+              <p role="alert" className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+                {errors.organizationName}
+              </p>
             ) : null}
           </div>
 
@@ -133,7 +135,9 @@ export default function SetupPage() {
               onChange={(event) => updateField("adminFullName", event.target.value)}
             />
             {errors.adminFullName ? (
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.adminFullName}</p>
+              <p role="alert" className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+                {errors.adminFullName}
+              </p>
             ) : null}
           </div>
 
@@ -146,7 +150,9 @@ export default function SetupPage() {
               onChange={(event) => updateField("adminEmail", event.target.value)}
             />
             {errors.adminEmail ? (
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.adminEmail}</p>
+              <p role="alert" className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+                {errors.adminEmail}
+              </p>
             ) : null}
           </div>
 
@@ -159,7 +165,9 @@ export default function SetupPage() {
               onChange={(event) => updateField("password", event.target.value)}
             />
             {errors.password ? (
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.password}</p>
+              <p role="alert" className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+                {errors.password}
+              </p>
             ) : null}
           </div>
 
@@ -172,7 +180,9 @@ export default function SetupPage() {
               onChange={(event) => updateField("confirmPassword", event.target.value)}
             />
             {errors.confirmPassword ? (
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">{errors.confirmPassword}</p>
+              <p role="alert" className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+                {errors.confirmPassword}
+              </p>
             ) : null}
           </div>
 

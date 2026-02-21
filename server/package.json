@@ -10,6 +10,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
+    "prisma:demo-seed": "tsx src/prisma/demo-seed.ts",
     "prisma:studio": "prisma studio",
     "test": "tsx --test src/formulas/evaluator.test.ts",
     "lint": "eslint \"src/**/*.ts\"",

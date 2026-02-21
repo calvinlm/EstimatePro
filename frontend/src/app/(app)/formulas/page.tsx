@@ -145,16 +145,16 @@ export default function FormulaLibraryPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table role="table" className="w-full text-sm">
             <thead className="bg-[var(--color-surface-2)] text-left text-[var(--color-text-muted)]">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Current Version</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Last Modified By</th>
-                <th className="px-4 py-3 font-medium">Last Modified Date</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th scope="col" className="px-4 py-3 font-medium">Name</th>
+                <th scope="col" className="px-4 py-3 font-medium">Category</th>
+                <th scope="col" className="px-4 py-3 font-medium">Current Version</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium">Last Modified By</th>
+                <th scope="col" className="px-4 py-3 font-medium">Last Modified Date</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -218,13 +218,13 @@ export default function FormulaLibraryPage() {
                               Version History
                             </p>
                             <div className="overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
-                              <table className="w-full text-sm">
+                              <table role="table" className="w-full text-sm">
                                 <thead className="bg-[var(--color-surface-2)] text-left text-[var(--color-text-muted)]">
                                   <tr>
-                                    <th className="px-3 py-2 font-medium">Version</th>
-                                    <th className="px-3 py-2 font-medium">Status</th>
-                                    <th className="px-3 py-2 font-medium">Created By</th>
-                                    <th className="px-3 py-2 font-medium">Created Date</th>
+                                    <th scope="col" className="px-3 py-2 font-medium">Version</th>
+                                    <th scope="col" className="px-3 py-2 font-medium">Status</th>
+                                    <th scope="col" className="px-3 py-2 font-medium">Created By</th>
+                                    <th scope="col" className="px-3 py-2 font-medium">Created Date</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -296,3 +296,4 @@ export default function FormulaLibraryPage() {
     </section>
   );
 }
+

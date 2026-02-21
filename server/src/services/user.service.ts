@@ -45,6 +45,8 @@ type UserSummary = {
   role: UserRole;
   status: UserStatus;
   createdAt: Date;
+  pendingInvite?: boolean;
+  inviteExpiresAt?: Date | null;
 };
 
 export type GetUsersResult = {
@@ -60,6 +62,9 @@ export type GetUsersResult = {
 export type InviteUserResult = {
   user: UserSummary;
   inviteExpiresAt: Date;
+  emailDelivery: "SENT" | "FAILED";
+  setupLink?: string;
+  emailDeliveryErrorCode?: string;
 };
 
 export type AcceptInviteResult = {
@@ -111,6 +116,7 @@ function buildInvitedUserName(email: string): string {
 }
 
 export async function getUsers(input: GetUsersInput): Promise<GetUsersResult> {
+  const now = new Date();
   const where = {
     organizationId: input.organizationId,
   };
@@ -135,8 +141,41 @@ export async function getUsers(input: GetUsersInput): Promise<GetUsersResult> {
     prisma.user.count({ where }),
   ]);
 
+  const userIds = items.map((item) => item.id);
+  const activeInviteTokens =
+    userIds.length === 0
+      ? []
+      : await prisma.passwordResetToken.findMany({
+          where: {
+            userId: {
+              in: userIds,
+            },
+            usedAt: null,
+            expiresAt: { gt: now },
+          },
+          orderBy: [{ userId: "asc" }, { expiresAt: "desc" }],
+          select: {
+            userId: true,
+            expiresAt: true,
+          },
+        });
+
+  const inviteExpiryByUserId = new Map<string, Date>();
+  for (const token of activeInviteTokens) {
+    if (!inviteExpiryByUserId.has(token.userId)) {
+      inviteExpiryByUserId.set(token.userId, token.expiresAt);
+    }
+  }
+
   return {
-    items,
+    items: items.map((item) => {
+      const inviteExpiresAt = inviteExpiryByUserId.get(item.id) ?? null;
+      return {
+        ...item,
+        pendingInvite: item.status === UserStatus.INACTIVE && inviteExpiresAt !== null,
+        inviteExpiresAt,
+      };
+    }),
     pagination: {
       page: input.page,
       pageSize: input.pageSize,
@@ -272,15 +311,29 @@ export async function inviteUser(input: InviteUserInput): Promise<InviteUserResu
     throw error;
   }
 
-  await sendUserInviteEmail({
-    to: normalizedEmail,
-    setupLink: inviteLink,
-    role: input.role,
-  });
+  let emailDelivery: InviteUserResult["emailDelivery"] = "SENT";
+  let emailDeliveryErrorCode: string | undefined;
+
+  try {
+    await sendUserInviteEmail({
+      to: normalizedEmail,
+      setupLink: inviteLink,
+      role: input.role,
+    });
+  } catch (error) {
+    emailDelivery = "FAILED";
+    emailDeliveryErrorCode = error instanceof AppError ? error.code : "EMAIL_DISPATCH_FAILED";
+  }
 
   return {
-    user: invitedUser,
+    user: {
+      ...invitedUser,
+      pendingInvite: true,
+      inviteExpiresAt: expiresAt,
+    },
     inviteExpiresAt: expiresAt,
+    emailDelivery,
+    ...(emailDelivery === "FAILED" ? { setupLink: inviteLink, emailDeliveryErrorCode } : {}),
   };
 }
 
@@ -509,6 +562,17 @@ export async function deactivateUser(input: DeactivateUserInput): Promise<Deacti
       },
       data: {
         revokedAt: now,
+      },
+    });
+
+    await tx.passwordResetToken.updateMany({
+      where: {
+        userId: user.id,
+        usedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: {
+        usedAt: now,
       },
     });
 

@@ -558,6 +558,82 @@ export type GetFormulasQuery = {
   pageSize?: number;
 };
 
+export type UserRole = "ADMIN" | "ESTIMATOR" | "VIEWER";
+export type UserStatus = "ACTIVE" | "INACTIVE";
+
+export type UserSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  pendingInvite?: boolean;
+  inviteExpiresAt?: string | null;
+};
+
+export type GetUsersResponse = {
+  items: UserSummary[];
+  pagination: Pagination;
+};
+
+export type GetUsersQuery = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type AuditEntityType = "Project" | "Estimate" | "LineItem" | "Formula" | "User";
+
+export type AuditLogEntry = {
+  id: string;
+  entityType: AuditEntityType;
+  entityId: string;
+  action: string;
+  beforeState: unknown;
+  afterState: unknown;
+  performedAt: string;
+  performedBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
+};
+
+export type GetAuditLogsResponse = {
+  items: AuditLogEntry[];
+  pagination: Pagination;
+};
+
+export type GetAuditLogsQuery = {
+  page?: number;
+  pageSize?: number;
+  from?: string;
+  to?: string;
+  userId?: string;
+  entityType?: AuditEntityType;
+};
+
+export type InviteUserRequest = {
+  email: string;
+  role: UserRole;
+};
+
+export type InviteUserResponse = {
+  user: UserSummary;
+  inviteExpiresAt: string;
+  emailDelivery: "SENT" | "FAILED";
+  setupLink?: string;
+  emailDeliveryErrorCode?: string;
+};
+
+export type UpdateUserRoleRequest = {
+  role: UserRole;
+};
+
+export type UserMutationResponse = {
+  user: UserSummary;
+};
+
 export type FormulaCreateOrUpdatePayload = {
   name: string;
   description: string;
@@ -995,6 +1071,87 @@ export async function getFormulaVersions(formulaId: string): Promise<FormulaVers
     {
       method: "GET",
       cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getUsers(query: GetUsersQuery = {}): Promise<GetUsersResponse> {
+  const queryString = toQueryString({
+    page: query.page,
+    pageSize: query.pageSize,
+  });
+
+  return requestJson<GetUsersResponse>(
+    `/users${queryString}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function getAuditLogs(query: GetAuditLogsQuery = {}): Promise<GetAuditLogsResponse> {
+  const queryString = toQueryString({
+    page: query.page,
+    pageSize: query.pageSize,
+    from: query.from,
+    to: query.to,
+    userId: query.userId,
+    entityType: query.entityType,
+  });
+
+  return requestJson<GetAuditLogsResponse>(
+    `/audit${queryString}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function inviteUser(payload: InviteUserRequest): Promise<InviteUserResponse> {
+  return requestJson<InviteUserResponse>(
+    "/users/invite",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function updateUserRole(
+  userId: string,
+  payload: UpdateUserRoleRequest,
+): Promise<UserMutationResponse> {
+  return requestJson<UserMutationResponse>(
+    `/users/${userId}/role`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    {
+      auth: true,
+    },
+  );
+}
+
+export async function deactivateUser(userId: string): Promise<UserMutationResponse> {
+  return requestJson<UserMutationResponse>(
+    `/users/${userId}/deactivate`,
+    {
+      method: "PATCH",
     },
     {
       auth: true,
