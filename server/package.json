@@ -4,8 +4,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run install:browser && tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "install:browser": "puppeteer browsers install chrome --path ./.cache/puppeteer",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",

@@ -182,6 +182,60 @@ function buildEstimateCacheKey(estimateId: string, updatedAt: Date): string {
   return `${estimateId}:${updatedAt.getTime()}`;
 }
 
+function getPuppeteerCacheDirectories(): string[] {
+  const configuredCacheDirectory = process.env.PUPPETEER_CACHE_DIR?.trim();
+  const projectCacheDirectory = path.join(process.cwd(), ".cache", "puppeteer");
+  const cacheDirectories = [configuredCacheDirectory, projectCacheDirectory].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  return Array.from(new Set(cacheDirectories));
+}
+
+async function resolvePuppeteerExecutablePath(): Promise<string | undefined> {
+  const explicitExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+  if (explicitExecutablePath) {
+    return explicitExecutablePath;
+  }
+
+  const platformExecutableCandidates =
+    process.platform === "win32"
+      ? [path.join("chrome-win64", "chrome.exe"), path.join("chrome-win32", "chrome.exe")]
+      : process.platform === "darwin"
+        ? [
+            path.join("chrome-mac-arm64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing"),
+            path.join("chrome-mac-x64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing"),
+          ]
+        : [path.join("chrome-linux64", "chrome")];
+
+  for (const cacheDirectory of getPuppeteerCacheDirectories()) {
+    const chromeRootDirectory = path.join(cacheDirectory, "chrome");
+    let buildDirectories: string[] = [];
+
+    try {
+      const entries = await fs.readdir(chromeRootDirectory, { withFileTypes: true });
+      buildDirectories = entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort()
+        .reverse();
+    } catch {
+      continue;
+    }
+
+    for (const buildDirectory of buildDirectories) {
+      for (const executableCandidate of platformExecutableCandidates) {
+        const candidatePath = path.join(chromeRootDirectory, buildDirectory, executableCandidate);
+        if (await fileExists(candidatePath)) {
+          return candidatePath;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
 async function getPdfOutputDirectory(): Promise<string> {
   const directory = path.join(os.tmpdir(), "estimatepro-ph", "pdf-jobs");
   await fs.mkdir(directory, { recursive: true });
@@ -619,7 +673,7 @@ function buildFooterTemplate(data: EstimatePdfData): string {
 }
 
 async function renderPdfBuffer(input: { html: string; footerTemplate: string }): Promise<Buffer> {
-  const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  const executablePath = await resolvePuppeteerExecutablePath();
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
