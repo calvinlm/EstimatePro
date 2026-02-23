@@ -681,8 +681,12 @@ async function renderPdfBuffer(input: { html: string; footerTemplate: string }):
   });
 
   try {
+    const renderTimeoutMs = 120_000;
     const page = await browser.newPage();
-    await page.setContent(input.html, { waitUntil: "networkidle0" });
+    await page.setContent(input.html, {
+      waitUntil: "domcontentloaded",
+      timeout: renderTimeoutMs,
+    });
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -696,6 +700,7 @@ async function renderPdfBuffer(input: { html: string; footerTemplate: string }):
         left: "12mm",
       },
       preferCSSPageSize: true,
+      timeout: renderTimeoutMs,
     });
 
     return Buffer.from(pdf);
